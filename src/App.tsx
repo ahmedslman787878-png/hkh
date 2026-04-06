@@ -17,11 +17,40 @@ const platforms = [
   { id: 'youtube', name: 'يوتيوب', icon: Youtube, iconBg: 'bg-gradient-to-br from-red-500 to-red-800', iconColor: 'text-white' },
 ];
 
-const packages = [
-  { id: 1, followers: 1000, price: 100, discount: '50.00', badge: 'new' },
-  { id: 2, followers: 3000, price: 250, discount: '100.00', badge: 'new' },
-  { id: 3, followers: 5000, price: 400, discount: '150.00', badge: 'best_seller' },
-  { id: 4, followers: 10000, price: 750, discount: '300.00', badge: 'new' },
+const defaultPackages = [
+  { id: 1, followers: 5000, price: 200, discount: '100.00', badge: 'new', providerServiceId: '1' },
+  { id: 2, followers: 10000, price: 330, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
+  { id: 3, followers: 20000, price: 600, discount: '300.00', badge: 'new', providerServiceId: '3' },
+  { id: 4, followers: 30000, price: 800, discount: '400.00', badge: 'new', providerServiceId: '4' },
+  { id: 5, followers: 50000, price: 1250, discount: '600.00', badge: 'new', providerServiceId: '11' },
+  { id: 6, followers: 100000, price: 2300, discount: '1000.00', badge: 'new', providerServiceId: '12' },
+];
+
+const instaPackages = [
+  { id: 1, followers: 5000, price: 300, discount: '100.00', badge: 'new', providerServiceId: '1' },
+  { id: 2, followers: 10000, price: 495, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
+  { id: 3, followers: 20000, price: 900, discount: '300.00', badge: 'new', providerServiceId: '3' },
+  { id: 4, followers: 30000, price: 1200, discount: '400.00', badge: 'new', providerServiceId: '4' },
+  { id: 5, followers: 50000, price: 1875, discount: '600.00', badge: 'new', providerServiceId: '11' },
+  { id: 6, followers: 100000, price: 3450, discount: '1000.00', badge: 'new', providerServiceId: '12' },
+];
+
+const tiktokPackages = [
+  { id: 1, followers: 5000, price: 300, discount: '100.00', badge: 'new', providerServiceId: '1' },
+  { id: 2, followers: 10000, price: 600, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
+  { id: 3, followers: 20000, price: 1200, discount: '300.00', badge: 'new', providerServiceId: '3' },
+  { id: 4, followers: 30000, price: 1800, discount: '400.00', badge: 'new', providerServiceId: '4' },
+  { id: 5, followers: 50000, price: 3000, discount: '600.00', badge: 'new', providerServiceId: '11' },
+  { id: 6, followers: 100000, price: 6000, discount: '1000.00', badge: 'new', providerServiceId: '12' },
+];
+
+const facebookPackages = [
+  { id: 1, followers: 5000, price: 200, discount: '100.00', badge: 'new', providerServiceId: '5' },
+  { id: 2, followers: 10000, price: 400, discount: '200.00', badge: 'best_seller', providerServiceId: '6' },
+  { id: 3, followers: 20000, price: 800, discount: '300.00', badge: 'new', providerServiceId: '7' },
+  { id: 4, followers: 30000, price: 1200, discount: '400.00', badge: 'new', providerServiceId: '8' },
+  { id: 5, followers: 50000, price: 2000, discount: '600.00', badge: 'new', providerServiceId: '9' },
+  { id: 6, followers: 100000, price: 4000, discount: '1000.00', badge: 'new', providerServiceId: '10' },
 ];
 
 function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
@@ -30,6 +59,14 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
 
   const currentPlatform = platforms.find(p => p.id === selectedPlatform) || platforms[2];
   const PlatformIcon = currentPlatform.icon;
+
+  const displayPackages = selectedPlatform === 'facebook' 
+    ? facebookPackages 
+    : selectedPlatform === 'tiktok'
+      ? tiktokPackages
+      : selectedPlatform === 'instagram'
+        ? instaPackages
+        : defaultPackages;
 
   const services = [
     { id: 'followers', name: 'متابعين', icon: Users },
@@ -84,7 +121,7 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
       <h2 className="text-xl font-bold text-center text-[#ffb800] mb-4">اختر باقتك</h2>
 
       <div className="grid grid-cols-2 gap-3">
-        {packages.map((pkg) => (
+        {displayPackages.map((pkg) => (
           <div key={pkg.id} className="bg-[#1a1a24] border border-gray-800 rounded-xl p-3 flex flex-col relative overflow-hidden">
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-1.5">
@@ -192,14 +229,21 @@ function Orders({ orders }: { orders: any[] }) {
                 {/* Progress Bar Section */}
                 <div className="mt-2 bg-[#0d0d12] rounded-lg p-3 border border-gray-800/50">
                   <div className="flex justify-between text-xs mb-2">
-                    <span className={isAccepted ? "text-emerald-400 font-bold" : "text-yellow-400 font-bold"}>
-                      {isAccepted ? "مقبول - جاري التنفيذ" : "جاري المراجعة"}
+                    <span className={
+                      order.status === 'مرفوض' ? "text-orange-500 font-bold" :
+                      isAccepted ? "text-emerald-400 font-bold" : "text-yellow-400 font-bold"
+                    }>
+                      {order.status === 'مرفوض' ? "مرفوض (لم يصل التحويل)" :
+                       isAccepted ? "مقبول - جاري التنفيذ" : "جاري المراجعة"}
                     </span>
                     {isAccepted && <span className="text-emerald-400 font-mono font-bold" dir="ltr">{timeString}</span>}
                   </div>
                   <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full rounded-full transition-all duration-1000 ${isAccepted ? 'bg-emerald-500' : 'bg-yellow-500 w-full animate-pulse'}`}
+                      className={`h-full rounded-full transition-all duration-1000 ${
+                        order.status === 'مرفوض' ? 'bg-orange-500 w-full' :
+                        isAccepted ? 'bg-emerald-500' : 'bg-yellow-500 w-full animate-pulse'
+                      }`}
                       style={{ width: isAccepted ? `${progressPercent}%` : '100%' }}
                     ></div>
                   </div>
@@ -385,7 +429,7 @@ function Profile() {
   );
 }
 
-function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], onUpdateOrderStatus: (id: string, status: string) => void, onDeleteOrder: (id: string) => void }) {
+function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], onUpdateOrderStatus: (order: any, status: string) => void, onDeleteOrder: (id: string) => void }) {
   return (
     <main className="max-w-md mx-auto p-4 pb-28">
       <h2 className="text-2xl font-bold text-red-500 mb-6 text-center">لوحة الإدارة</h2>
@@ -409,12 +453,24 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
               <p className="text-gray-500 text-[10px] truncate mb-3" dir="ltr">{order.link}</p>
               
               {order.status === 'بانتظار الموافقة' && (
-                <button 
-                  onClick={() => onUpdateOrderStatus(order.id, 'مقبول - جاري التنفيذ')}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors text-sm mt-2"
-                >
-                  تأكيد التحويل (قبول)
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button 
+                    onClick={() => onUpdateOrderStatus(order, 'مقبول - جاري التنفيذ')}
+                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                  >
+                    قبول (تأكيد)
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if(window.confirm('هل أنت متأكد من رفض هذا الطلب لعدم وصول التحويل؟')) {
+                        onUpdateOrderStatus(order, 'مرفوض');
+                      }
+                    }}
+                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                  >
+                    رفض الطلب
+                  </button>
+                </div>
               )}
               <button 
                 onClick={() => {
@@ -479,7 +535,8 @@ function AppContent() {
       amount: pkg.followers,
       price: pkg.price,
       platformName: pkg.platformName,
-      serviceName: pkg.serviceName
+      serviceName: pkg.serviceName,
+      providerServiceId: pkg.providerServiceId
     });
     navigate('/checkout');
   };
@@ -491,6 +548,7 @@ function AppContent() {
         price: order.price,
         platformName: order.platformName,
         serviceName: order.serviceName,
+        providerServiceId: order.providerServiceId,
         link: order.link,
         transferPhone: order.transferPhone,
         status: order.status,
@@ -505,15 +563,52 @@ function AppContent() {
     }
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+  const handleUpdateOrderStatus = async (order: any, newStatus: string) => {
     try {
-      const orderRef = doc(db, 'orders', orderId);
-      await updateDoc(orderRef, {
+      let providerOrderId = null;
+
+      if (newStatus === 'مقبول - جاري التنفيذ') {
+        try {
+          const response = await fetch('/api/smm/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              serviceId: order.providerServiceId || '1',
+              link: order.link,
+              quantity: order.amount
+            })
+          });
+
+          const data = await response.json();
+          if (data.error) {
+            alert('خطأ من المزود: ' + data.error);
+            return; // Stop if provider fails
+          }
+          if (data.order) {
+            providerOrderId = data.order;
+            alert(`تم إرسال الطلب للمزود بنجاح! رقم الطلب: ${data.order}`);
+          }
+        } catch (err) {
+          console.error("Error calling SMM API:", err);
+          alert("فشل الاتصال بالخادم لإرسال الطلب للمزود.");
+          return;
+        }
+      }
+
+      const orderRef = doc(db, 'orders', order.id);
+      const updateData: any = {
         status: newStatus,
         acceptedAt: Date.now()
-      });
+      };
+      
+      if (providerOrderId) {
+        updateData.providerOrderId = providerOrderId;
+      }
+
+      await updateDoc(orderRef, updateData);
     } catch (error) {
       console.error("Error updating order:", error);
+      alert("حدث خطأ أثناء تحديث الطلب");
     }
   };
 
