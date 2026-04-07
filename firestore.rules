@@ -36,7 +36,8 @@ service cloud.firestore {
              data.serviceName is string && data.serviceName.size() > 0 && data.serviceName.size() < 50 &&
              data.link is string && data.link.size() > 0 && data.link.size() < 500 &&
              data.transferPhone is string && data.transferPhone.size() > 0 && data.transferPhone.size() < 20 &&
-             data.status is string && data.status in ['بانتظار الموافقة', 'مقبول - جاري التنفيذ', 'مكتمل', 'مرفوض'] &&
+             data.status is string && data.status in ['بانتظار الموافقة', 'جاري الاتصال بالسيرفر', 'مقبول - جاري التنفيذ', 'مكتمل', 'مرفوض', 'خطأ من المزود'] &&
+             (!('errorMessage' in data) || data.errorMessage is string) &&
              data.createdAt is number &&
              data.userId is string;
     }

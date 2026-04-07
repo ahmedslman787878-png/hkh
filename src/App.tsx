@@ -53,6 +53,29 @@ const facebookPackages = [
   { id: 6, followers: 100000, price: 4000, discount: '1000.00', badge: 'new', providerServiceId: '10' },
 ];
 
+const serviceIdMap: Record<string, Record<string, string>> = {
+  facebook: {
+    followers: '468', // Facebook Followers [All Type]
+    likes: '82', // Facebook Post React | Love
+    views: '90', // Facebook Reels Views
+  },
+  tiktok: {
+    followers: '479', // TikTok Followers
+    likes: '196', // TikTok Likes
+    views: '474', // TikTok Video Views
+  },
+  instagram: {
+    followers: '382', // Instagram Followers
+    likes: '202', // Instagram Likes
+    views: '53', // Instagram Video Views
+  },
+  youtube: {
+    followers: '64', // YouTube Subscribers
+    likes: '66', // YouTube Likes
+    views: '56', // YouTube Views
+  }
+};
+
 function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
   const [selectedPlatform, setSelectedPlatform] = useState('tiktok');
   const [selectedService, setSelectedService] = useState('followers');
@@ -167,7 +190,8 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
               onClick={() => onSelectPackage({ 
                 ...pkg, 
                 platformName: currentPlatform.name, 
-                serviceName: currentService.name 
+                serviceName: currentService.name,
+                providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || pkg.providerServiceId
               })}
               className="w-full bg-[#ffb800] hover:bg-[#e5a600] text-black font-bold py-2 text-sm rounded-lg transition-colors active:scale-95">
               اختيار
@@ -430,6 +454,28 @@ function Profile() {
 }
 
 function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], onUpdateOrderStatus: (order: any, status: string) => void, onDeleteOrder: (id: string) => void }) {
+  const [now, setNow] = useState(Date.now());
+  const [processing, setProcessing] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    orders.forEach(order => {
+      if (order.status === 'جاري الاتصال بالسيرفر' && order.connectionStartTime) {
+        const elapsed = now - order.connectionStartTime;
+        if (elapsed >= 120000 && !processing.has(order.id)) {
+          setProcessing(prev => new Set(prev).add(order.id));
+          onUpdateOrderStatus(order, 'مقبول - جاري التنفيذ');
+        }
+      }
+    });
+  }, [now, orders, onUpdateOrderStatus, processing]);
+
   return (
     <main className="max-w-md mx-auto p-4 pb-28">
       <h2 className="text-2xl font-bold text-red-500 mb-6 text-center">لوحة الإدارة</h2>
@@ -441,49 +487,79 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
         </div>
       ) : (
         <div className="space-y-4">
-          {orders.map((order, idx) => (
-            <div key={idx} className="bg-[#1a1a24] border border-gray-800 rounded-xl p-4">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-gray-300 font-mono text-sm">طلب #{order.id}</span>
-                <span className="bg-yellow-500/20 text-yellow-400 text-[10px] font-bold px-2 py-1 rounded-full border border-yellow-500/30">{order.status}</span>
-              </div>
-              <p className="text-white font-bold mb-1">{order.amount.toLocaleString('en-US')} {order.serviceName} {order.platformName}</p>
-              <p className="text-gray-400 text-xs mb-1 whitespace-nowrap">المبلغ: {order.price} جنيه</p>
-              <p className="text-gray-400 text-xs mb-1">الرقم المحول منه: <span className="text-white font-mono">{order.transferPhone}</span></p>
-              <p className="text-gray-500 text-[10px] truncate mb-3" dir="ltr">{order.link}</p>
-              
-              {order.status === 'بانتظار الموافقة' && (
-                <div className="flex gap-2 mt-2">
-                  <button 
-                    onClick={() => onUpdateOrderStatus(order, 'مقبول - جاري التنفيذ')}
-                    className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
-                  >
-                    قبول (تأكيد)
-                  </button>
-                  <button 
-                    onClick={() => {
-                      if(window.confirm('هل أنت متأكد من رفض هذا الطلب لعدم وصول التحويل؟')) {
-                        onUpdateOrderStatus(order, 'مرفوض');
-                      }
-                    }}
-                    className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
-                  >
-                    رفض الطلب
-                  </button>
+          {orders.map((order, idx) => {
+            let timeLeft = 0;
+            if (order.status === 'جاري الاتصال بالسيرفر' && order.connectionStartTime) {
+              timeLeft = Math.max(0, 120 - Math.floor((now - order.connectionStartTime) / 1000));
+            }
+
+            return (
+              <div key={idx} className="bg-[#1a1a24] border border-gray-800 rounded-xl p-4">
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-gray-300 font-mono text-sm">طلب #{order.id}</span>
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
+                    order.status === 'مقبول - جاري التنفيذ' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                    order.status === 'جاري الاتصال بالسيرفر' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                    order.status === 'مرفوض' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                    order.status === 'خطأ من المزود' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' :
+                    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                  }`}>
+                    {order.status}
+                  </span>
                 </div>
-              )}
-              <button 
-                onClick={() => {
-                  if(window.confirm('هل أنت متأكد من حذف هذا الطلب؟')) {
-                    onDeleteOrder(order.id);
-                  }
-                }}
-                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-2 rounded-lg transition-colors text-sm mt-2"
-              >
-                حذف الطلب
-              </button>
-            </div>
-          ))}
+                <p className="text-white font-bold mb-1">{order.amount.toLocaleString('en-US')} {order.serviceName} {order.platformName}</p>
+                <p className="text-gray-400 text-xs mb-1 whitespace-nowrap">المبلغ: {order.price} جنيه</p>
+                <p className="text-gray-400 text-xs mb-1">الرقم المحول منه: <span className="text-white font-mono">{order.transferPhone}</span></p>
+                <p className="text-gray-500 text-[10px] truncate mb-3" dir="ltr">{order.link}</p>
+                
+                {order.status === 'بانتظار الموافقة' && (
+                  <div className="flex gap-2 mt-2">
+                    <button 
+                      onClick={() => onUpdateOrderStatus(order, 'جاري الاتصال بالسيرفر')}
+                      className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                    >
+                      قبول (تأكيد)
+                    </button>
+                    <button 
+                      onClick={() => onUpdateOrderStatus(order, 'مرفوض')}
+                      className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                    >
+                      رفض الطلب
+                    </button>
+                  </div>
+                )}
+
+                {order.status === 'جاري الاتصال بالسيرفر' && (
+                  <div className="mt-3 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
+                    <p className="text-blue-400 text-sm font-bold mb-1">جاري الاتصال بالسيرفر...</p>
+                    <p className="text-white font-mono text-lg">
+                      {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
+                    </p>
+                  </div>
+                )}
+
+                {order.status === 'خطأ من المزود' && (
+                  <div className="mt-3 bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-center">
+                    <p className="text-red-400 text-sm font-bold mb-1">حدث خطأ أثناء الاتصال بالمزود</p>
+                    <p className="text-gray-300 text-xs mb-3">{order.errorMessage}</p>
+                    <button 
+                      onClick={() => onUpdateOrderStatus(order, 'بانتظار الموافقة')}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                    >
+                      إعادة الطلب للمراجعة
+                    </button>
+                  </div>
+                )}
+
+                <button 
+                  onClick={() => onDeleteOrder(order.id)}
+                  className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-500 font-bold py-2 rounded-lg transition-colors text-sm mt-2"
+                >
+                  حذف الطلب
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
     </main>
@@ -509,6 +585,12 @@ function AppContent() {
     }
     return id;
   });
+
+  const [toastMessage, setToastMessage] = useState('');
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
 
   useEffect(() => {
     const q = query(collection(db, 'orders'), orderBy('createdAt', 'desc'));
@@ -559,13 +641,15 @@ function AppContent() {
       await addDoc(collection(db, 'orders'), orderData);
     } catch (error) {
       console.error("Error adding order:", error);
-      alert("حدث خطأ أثناء إضافة الطلب");
+      showToast("حدث خطأ أثناء إضافة الطلب");
     }
   };
 
   const handleUpdateOrderStatus = async (order: any, newStatus: string) => {
     try {
       let providerOrderId = null;
+      let finalStatus = newStatus;
+      let errorMessage = "";
 
       if (newStatus === 'مقبول - جاري التنفيذ') {
         try {
@@ -581,34 +665,49 @@ function AppContent() {
 
           const data = await response.json();
           if (data.error) {
-            alert('خطأ من المزود: ' + data.error);
-            return; // Stop if provider fails
-          }
-          if (data.order) {
+            finalStatus = 'خطأ من المزود';
+            errorMessage = data.error;
+            showToast('خطأ من المزود: ' + data.error);
+          } else if (data.order) {
             providerOrderId = data.order;
-            alert(`تم إرسال الطلب للمزود بنجاح! رقم الطلب: ${data.order}`);
+            showToast(`تم إرسال الطلب للمزود بنجاح! رقم الطلب: ${data.order}`);
           }
         } catch (err) {
           console.error("Error calling SMM API:", err);
-          alert("فشل الاتصال بالخادم لإرسال الطلب للمزود.");
-          return;
+          finalStatus = 'خطأ من المزود';
+          errorMessage = 'فشل الاتصال بالخادم لإرسال الطلب للمزود.';
+          showToast("فشل الاتصال بالخادم لإرسال الطلب للمزود.");
         }
       }
 
       const orderRef = doc(db, 'orders', order.id);
       const updateData: any = {
-        status: newStatus,
+        status: finalStatus,
         acceptedAt: Date.now()
       };
       
+      if (finalStatus === 'جاري الاتصال بالسيرفر') {
+        updateData.connectionStartTime = Date.now();
+      }
+
+      if (finalStatus === 'خطأ من المزود') {
+        updateData.errorMessage = errorMessage;
+      } else if (finalStatus === 'بانتظار الموافقة') {
+        updateData.errorMessage = "";
+      }
+
       if (providerOrderId) {
         updateData.providerOrderId = providerOrderId;
       }
 
       await updateDoc(orderRef, updateData);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.code === 'not-found') {
+        console.log("Order was deleted, skipping update.");
+        return;
+      }
       console.error("Error updating order:", error);
-      alert("حدث خطأ أثناء تحديث الطلب");
+      showToast("حدث خطأ أثناء تحديث الطلب");
     }
   };
 
@@ -693,6 +792,14 @@ function AppContent() {
           <span className="text-[10px] font-bold">الإدارة</span>
         </button>
       </nav>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl z-[200] text-sm font-bold border border-gray-700 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-[#ffb800] animate-pulse"></div>
+          {toastMessage}
+        </div>
+      )}
 
       {/* Admin Password Modal */}
       {showAdminModal && (
