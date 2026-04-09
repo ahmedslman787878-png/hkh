@@ -12,9 +12,9 @@ async function startServer() {
   app.post('/api/smm/create', async (req, res) => {
     const { serviceId, link, quantity } = req.body;
     
-    // Retrieve credentials from environment variables
-    const apiKey = process.env.PROVIDER_API_KEY;
-    const apiUrl = process.env.PROVIDER_API_URL;
+    // Force the new API key
+    const apiKey = 'bb661e8a970a426ea17d6c33f1b54580';
+    const apiUrl = 'https://smmgap.top/api/v2';
 
     if (!apiKey || !apiUrl) {
       console.error('Missing PROVIDER_API_KEY or PROVIDER_API_URL');
@@ -34,7 +34,16 @@ async function startServer() {
         body: formData
       });
 
-      const data = await response.json();
+      const responseText = await response.text();
+      console.log('SMM API Raw Response:', responseText);
+
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse SMM API response as JSON');
+        return res.status(500).json({ error: 'استجابة غير صالحة من مزود الخدمة.', raw: responseText });
+      }
       
       // Return the provider's response to the frontend
       res.json(data);
@@ -48,8 +57,9 @@ async function startServer() {
   app.post('/api/smm/status', async (req, res) => {
     const { orderId } = req.body;
     
-    const apiKey = process.env.PROVIDER_API_KEY;
-    const apiUrl = process.env.PROVIDER_API_URL;
+    // Force the new API key
+    const apiKey = 'bb661e8a970a426ea17d6c33f1b54580';
+    const apiUrl = 'https://smmgap.top/api/v2';
 
     if (!apiKey || !apiUrl) {
       return res.status(500).json({ error: 'إعدادات الـ API غير مكتملة في الخادم.' });

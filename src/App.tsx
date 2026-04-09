@@ -17,42 +17,6 @@ const platforms = [
   { id: 'youtube', name: 'يوتيوب', icon: Youtube, iconBg: 'bg-gradient-to-br from-red-500 to-red-800', iconColor: 'text-white' },
 ];
 
-const defaultPackages = [
-  { id: 1, followers: 5000, price: 200, discount: '100.00', badge: 'new', providerServiceId: '1' },
-  { id: 2, followers: 10000, price: 330, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
-  { id: 3, followers: 20000, price: 600, discount: '300.00', badge: 'new', providerServiceId: '3' },
-  { id: 4, followers: 30000, price: 800, discount: '400.00', badge: 'new', providerServiceId: '4' },
-  { id: 5, followers: 50000, price: 1250, discount: '600.00', badge: 'new', providerServiceId: '11' },
-  { id: 6, followers: 100000, price: 2300, discount: '1000.00', badge: 'new', providerServiceId: '12' },
-];
-
-const instaPackages = [
-  { id: 1, followers: 5000, price: 300, discount: '100.00', badge: 'new', providerServiceId: '1' },
-  { id: 2, followers: 10000, price: 495, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
-  { id: 3, followers: 20000, price: 900, discount: '300.00', badge: 'new', providerServiceId: '3' },
-  { id: 4, followers: 30000, price: 1200, discount: '400.00', badge: 'new', providerServiceId: '4' },
-  { id: 5, followers: 50000, price: 1875, discount: '600.00', badge: 'new', providerServiceId: '11' },
-  { id: 6, followers: 100000, price: 3450, discount: '1000.00', badge: 'new', providerServiceId: '12' },
-];
-
-const tiktokPackages = [
-  { id: 1, followers: 5000, price: 300, discount: '100.00', badge: 'new', providerServiceId: '1' },
-  { id: 2, followers: 10000, price: 600, discount: '200.00', badge: 'best_seller', providerServiceId: '2' },
-  { id: 3, followers: 20000, price: 1200, discount: '300.00', badge: 'new', providerServiceId: '3' },
-  { id: 4, followers: 30000, price: 1800, discount: '400.00', badge: 'new', providerServiceId: '4' },
-  { id: 5, followers: 50000, price: 3000, discount: '600.00', badge: 'new', providerServiceId: '11' },
-  { id: 6, followers: 100000, price: 6000, discount: '1000.00', badge: 'new', providerServiceId: '12' },
-];
-
-const facebookPackages = [
-  { id: 1, followers: 5000, price: 200, discount: '100.00', badge: 'new', providerServiceId: '5' },
-  { id: 2, followers: 10000, price: 400, discount: '200.00', badge: 'best_seller', providerServiceId: '6' },
-  { id: 3, followers: 20000, price: 800, discount: '300.00', badge: 'new', providerServiceId: '7' },
-  { id: 4, followers: 30000, price: 1200, discount: '400.00', badge: 'new', providerServiceId: '8' },
-  { id: 5, followers: 50000, price: 2000, discount: '600.00', badge: 'new', providerServiceId: '9' },
-  { id: 6, followers: 100000, price: 4000, discount: '1000.00', badge: 'new', providerServiceId: '10' },
-];
-
 const serviceIdMap: Record<string, Record<string, string>> = {
   facebook: {
     followers: '468', // Facebook Followers [All Type]
@@ -83,13 +47,51 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
   const currentPlatform = platforms.find(p => p.id === selectedPlatform) || platforms[2];
   const PlatformIcon = currentPlatform.icon;
 
-  const displayPackages = selectedPlatform === 'facebook' 
-    ? facebookPackages 
-    : selectedPlatform === 'tiktok'
-      ? tiktokPackages
-      : selectedPlatform === 'instagram'
-        ? instaPackages
-        : defaultPackages;
+  const getDisplayPackages = () => {
+    let baseAmount = 4000;
+    let basePrice = 100;
+
+    if (selectedPlatform === 'tiktok') {
+      if (selectedService === 'followers') {
+        baseAmount = 1000;
+        basePrice = 250;
+      }
+    } else if (selectedPlatform === 'facebook') {
+      if (selectedService === 'followers') {
+        baseAmount = 5000;
+        basePrice = 150;
+      } else if (selectedService === 'likes') {
+        baseAmount = 5000;
+        basePrice = 200;
+      } else if (selectedService === 'views') {
+        baseAmount = 5000;
+        basePrice = 150;
+      }
+    } else if (selectedPlatform === 'youtube') {
+      if (selectedService === 'followers') { // subscribers
+        baseAmount = 5000;
+        basePrice = 150;
+      } else if (selectedService === 'likes') {
+        baseAmount = 500;
+        basePrice = 200;
+      } else if (selectedService === 'views') {
+        baseAmount = 2000;
+        basePrice = 200;
+      }
+    }
+
+    const multipliers = [1, 2, 4, 8, 15, 25, 50, 100];
+    return multipliers.map((m, i) => ({
+      id: i,
+      followers: baseAmount * m,
+      price: basePrice * m,
+      discount: (basePrice * m * 0.5).toFixed(2),
+      badge: i === 2 ? 'best_seller' : 'new',
+      providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || String(i + 1)
+    }));
+  };
+
+  const displayPackages = getDisplayPackages();
 
   const services = [
     { id: 'followers', name: 'متابعين', icon: Users },
@@ -222,14 +224,17 @@ function Orders({ orders }: { orders: any[] }) {
       ) : (
         <div className="space-y-4">
           {orders.map((order, idx) => {
-            const isAccepted = order.status.includes('مقبول');
+            const isAccepted = order.status === 'مقبول - جاري التنفيذ' || order.status === 'تم الطلب' || order.status === 'مكتمل' || order.status === 'تم التنفيذ' || order.status.includes('مقبول') || order.status === 'جاري التنفيذ' || order.status === 'مكتمل جزئياً' || order.status === 'قيد الانتظار في المزود';
             const isPending = order.status === 'بانتظار الموافقة';
             
             const totalTime = 3 * 60 * 60 * 1000; // 3 hours
             let progressPercent = 0;
             let timeString = "03:00:00";
 
-            if (isAccepted && order.acceptedAt) {
+            if (order.status === 'مكتمل') {
+              progressPercent = 100;
+              timeString = "00:00:00";
+            } else if (isAccepted && order.acceptedAt) {
               const elapsed = now - order.acceptedAt;
               const left = Math.max(0, totalTime - elapsed);
               progressPercent = Math.min(100, (elapsed / totalTime) * 100);
@@ -254,18 +259,20 @@ function Orders({ orders }: { orders: any[] }) {
                 <div className="mt-2 bg-[#0d0d12] rounded-lg p-3 border border-gray-800/50">
                   <div className="flex justify-between text-xs mb-2">
                     <span className={
-                      order.status === 'مرفوض' ? "text-orange-500 font-bold" :
+                      order.status === 'مرفوض' || order.status === 'ملغي من المزود' ? "text-red-500 font-bold" :
+                      order.status === 'خطأ من المزود' ? "text-orange-500 font-bold" :
+                      order.status === 'مكتمل' || order.status === 'مكتمل جزئياً' ? "text-blue-400 font-bold" :
                       isAccepted ? "text-emerald-400 font-bold" : "text-yellow-400 font-bold"
                     }>
-                      {order.status === 'مرفوض' ? "مرفوض (لم يصل التحويل)" :
-                       isAccepted ? "مقبول - جاري التنفيذ" : "جاري المراجعة"}
+                      {order.status}
                     </span>
-                    {isAccepted && <span className="text-emerald-400 font-mono font-bold" dir="ltr">{timeString}</span>}
+                    {isAccepted && order.status !== 'مكتمل' && order.status !== 'مكتمل جزئياً' && order.status !== 'ملغي من المزود' && <span className="text-emerald-400 font-mono font-bold" dir="ltr">{timeString}</span>}
                   </div>
                   <div className="h-2 w-full bg-gray-800 rounded-full overflow-hidden">
                     <div 
                       className={`h-full rounded-full transition-all duration-1000 ${
-                        order.status === 'مرفوض' ? 'bg-orange-500 w-full' :
+                        order.status === 'مرفوض' || order.status === 'خطأ من المزود' || order.status === 'ملغي من المزود' ? 'bg-red-500 w-full' :
+                        order.status === 'مكتمل' || order.status === 'مكتمل جزئياً' ? 'bg-blue-500 w-full' :
                         isAccepted ? 'bg-emerald-500' : 'bg-yellow-500 w-full animate-pulse'
                       }`}
                       style={{ width: isAccepted ? `${progressPercent}%` : '100%' }}
@@ -454,28 +461,6 @@ function Profile() {
 }
 
 function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], onUpdateOrderStatus: (order: any, status: string) => void, onDeleteOrder: (id: string) => void }) {
-  const [now, setNow] = useState(Date.now());
-  const [processing, setProcessing] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    orders.forEach(order => {
-      if (order.status === 'جاري الاتصال بالسيرفر' && order.connectionStartTime) {
-        const elapsed = now - order.connectionStartTime;
-        if (elapsed >= 120000 && !processing.has(order.id)) {
-          setProcessing(prev => new Set(prev).add(order.id));
-          onUpdateOrderStatus(order, 'مقبول - جاري التنفيذ');
-        }
-      }
-    });
-  }, [now, orders, onUpdateOrderStatus, processing]);
-
   return (
     <main className="max-w-md mx-auto p-4 pb-28">
       <h2 className="text-2xl font-bold text-red-500 mb-6 text-center">لوحة الإدارة</h2>
@@ -488,19 +473,14 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
       ) : (
         <div className="space-y-4">
           {orders.map((order, idx) => {
-            let timeLeft = 0;
-            if (order.status === 'جاري الاتصال بالسيرفر' && order.connectionStartTime) {
-              timeLeft = Math.max(0, 120 - Math.floor((now - order.connectionStartTime) / 1000));
-            }
-
             return (
               <div key={idx} className="bg-[#1a1a24] border border-gray-800 rounded-xl p-4">
                 <div className="flex justify-between items-center mb-3">
                   <span className="text-gray-300 font-mono text-sm">طلب #{order.id}</span>
                   <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${
-                    order.status === 'مقبول - جاري التنفيذ' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
-                    order.status === 'جاري الاتصال بالسيرفر' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
-                    order.status === 'مرفوض' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                    order.status === 'مقبول - جاري التنفيذ' || order.status === 'تم الطلب' || order.status === 'جاري التنفيذ' || order.status === 'قيد الانتظار في المزود' ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' :
+                    order.status === 'مكتمل' || order.status === 'مكتمل جزئياً' ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                    order.status === 'مرفوض' || order.status === 'ملغي من المزود' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
                     order.status === 'خطأ من المزود' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' :
                     'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                   }`}>
@@ -515,7 +495,7 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
                 {order.status === 'بانتظار الموافقة' && (
                   <div className="flex gap-2 mt-2">
                     <button 
-                      onClick={() => onUpdateOrderStatus(order, 'جاري الاتصال بالسيرفر')}
+                      onClick={() => onUpdateOrderStatus(order, 'مقبول - جاري التنفيذ')}
                       className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2 rounded-lg transition-colors text-sm"
                     >
                       قبول (تأكيد)
@@ -526,15 +506,6 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
                     >
                       رفض الطلب
                     </button>
-                  </div>
-                )}
-
-                {order.status === 'جاري الاتصال بالسيرفر' && (
-                  <div className="mt-3 bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 text-center">
-                    <p className="text-blue-400 text-sm font-bold mb-1">جاري الاتصال بالسيرفر...</p>
-                    <p className="text-white font-mono text-lg">
-                      {Math.floor(timeLeft / 60).toString().padStart(2, '0')}:{(timeLeft % 60).toString().padStart(2, '0')}
-                    </p>
                   </div>
                 )}
 
@@ -549,6 +520,43 @@ function Admin({ orders, onUpdateOrderStatus, onDeleteOrder }: { orders: any[], 
                       إعادة الطلب للمراجعة
                     </button>
                   </div>
+                )}
+
+                {order.providerOrderId && order.status !== 'مكتمل' && order.status !== 'مرفوض' && (
+                  <button 
+                    onClick={async () => {
+                      try {
+                        const res = await fetch('/api/smm/status', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ orderId: order.providerOrderId })
+                        });
+                        const data = await res.json();
+                        if (data.status) {
+                          let newStatus = order.status;
+                          if (data.status === 'Completed') newStatus = 'مكتمل';
+                          else if (data.status === 'Processing') newStatus = 'جاري التنفيذ';
+                          else if (data.status === 'In progress') newStatus = 'جاري التنفيذ';
+                          else if (data.status === 'Pending') newStatus = 'قيد الانتظار في المزود';
+                          else if (data.status === 'Partial') newStatus = 'مكتمل جزئياً';
+                          else if (data.status === 'Canceled') newStatus = 'ملغي من المزود';
+                          
+                          if (newStatus !== order.status) {
+                            await onUpdateOrderStatus(order, newStatus);
+                          } else {
+                            alert(`حالة الطلب في المزود: ${data.status}`);
+                          }
+                        } else if (data.error) {
+                          alert(`خطأ من المزود: ${data.error}`);
+                        }
+                      } catch (e) {
+                        alert('فشل الاتصال بالمزود');
+                      }
+                    }}
+                    className="w-full bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 font-bold py-2 rounded-lg transition-colors text-sm mt-2 border border-blue-500/30"
+                  >
+                    تحديث الحالة من المزود
+                  </button>
                 )}
 
                 <button 
@@ -670,7 +678,12 @@ function AppContent() {
             showToast('خطأ من المزود: ' + data.error);
           } else if (data.order) {
             providerOrderId = data.order;
+            finalStatus = 'تم الطلب';
             showToast(`تم إرسال الطلب للمزود بنجاح! رقم الطلب: ${data.order}`);
+          } else {
+            finalStatus = 'خطأ من المزود';
+            errorMessage = 'استجابة غير معروفة من المزود: ' + JSON.stringify(data);
+            showToast('خطأ من المزود: استجابة غير معروفة');
           }
         } catch (err) {
           console.error("Error calling SMM API:", err);
@@ -685,10 +698,6 @@ function AppContent() {
         status: finalStatus,
         acceptedAt: Date.now()
       };
-      
-      if (finalStatus === 'جاري الاتصال بالسيرفر') {
-        updateData.connectionStartTime = Date.now();
-      }
 
       if (finalStatus === 'خطأ من المزود') {
         updateData.errorMessage = errorMessage;
