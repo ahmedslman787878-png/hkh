@@ -103,6 +103,12 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
 
   return (
     <main className="max-w-md mx-auto p-4 pb-28">
+      {/* SEO Keywords Intro */}
+      <div className="text-center mb-6">
+        <h2 className="text-lg font-bold text-white mb-1">أفضل سيرفر تزويد متابعين ومشاهدات SMM</h2>
+        <p className="text-gray-400 text-xs">احصل على تفاعل حقيقي، مشاهدات، ومتابعين بأرخص الأسعار</p>
+      </div>
+
       {/* Platforms - Single Row */}
       <div className="flex justify-between items-center gap-2 mb-6">
         {platforms.map((p) => {
@@ -763,10 +769,10 @@ function AppContent() {
         </button>
         
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-700 flex items-center justify-center shadow-[0_0_15px_rgba(255,184,0,0.2)]">
-            <span className="text-[9px] font-black text-black leading-none text-center">الأسد<br/>الذهبي</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-700 flex items-center justify-center shadow-[0_0_15px_rgba(255,184,0,0.2)] shrink-0">
+            <span className="text-[10px] font-black text-black leading-none text-center">SMM<br/>تزويد</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#ffb800] tracking-wide">الأسد الذهبي</h1>
+          <h1 className="text-base sm:text-lg font-bold text-[#ffb800] tracking-wide leading-tight">تزويد المتابعين والمشاهدات SMM</h1>
         </div>
 
         <a 
