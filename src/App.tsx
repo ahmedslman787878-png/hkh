@@ -764,9 +764,9 @@ function AppContent() {
         
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-700 flex items-center justify-center shadow-[0_0_15px_rgba(255,184,0,0.2)]">
-            <span className="text-[9px] font-black text-black leading-none text-center">الدعم<br/>العربي</span>
+            <span className="text-[9px] font-black text-black leading-none text-center">الأسد<br/>الذهبي</span>
           </div>
-          <h1 className="text-2xl font-bold text-[#ffb800] tracking-wide">الدعم العربي</h1>
+          <h1 className="text-2xl font-bold text-[#ffb800] tracking-wide">الأسد الذهبي</h1>
         </div>
 
         <a 
