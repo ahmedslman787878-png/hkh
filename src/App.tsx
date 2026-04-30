@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, MessageCircle, Shield, Zap, Users, Facebook, Instagram, Youtube, Home as HomeIcon, ClipboardList, User, Heart, Eye, Edit2, Check } from 'lucide-react';
+import { Menu, MessageCircle, Shield, Zap, Users, Facebook, Instagram, Youtube, Home as HomeIcon, ClipboardList, User, Heart, Eye, Edit2, Check, Clock } from 'lucide-react';
 import { collection, addDoc, onSnapshot, query, orderBy, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -44,6 +44,13 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
   const [selectedPlatform, setSelectedPlatform] = useState('tiktok');
   const [selectedService, setSelectedService] = useState('followers');
 
+  useEffect(() => {
+    // Reset service to followers when switching platforms to prevent invalid state
+    if (selectedPlatform !== 'youtube' && selectedService === 'watch_hours') {
+      setSelectedService('followers');
+    }
+  }, [selectedPlatform, selectedService]);
+
   const currentPlatform = platforms.find(p => p.id === selectedPlatform) || platforms[2];
   const PlatformIcon = currentPlatform.icon;
 
@@ -68,7 +75,26 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
         basePrice = 150;
       }
     } else if (selectedPlatform === 'youtube') {
-      if (selectedService === 'followers') { // subscribers
+      if (selectedService === 'watch_hours') {
+        return [
+          {
+            id: 0,
+            followers: 2000,
+            price: 400,
+            discount: '200.00',
+            badge: 'new',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || 'watch_hours_1'
+          },
+          {
+            id: 1,
+            followers: 4000,
+            price: 800,
+            discount: '400.00',
+            badge: 'best_seller',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || 'watch_hours_2'
+          }
+        ];
+      } else if (selectedService === 'followers') { // subscribers
         baseAmount = 5000;
         basePrice = 150;
       } else if (selectedService === 'likes') {
@@ -98,6 +124,11 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
     { id: 'likes', name: 'لايكات', icon: Heart },
     { id: 'views', name: 'مشاهدات', icon: Eye },
   ];
+  
+  if (selectedPlatform === 'youtube') {
+    services.splice(1, 0, { id: 'watch_hours', name: 'ساعات مشاهدة', icon: Clock });
+  }
+
   const currentService = services.find(s => s.id === selectedService) || services[0];
   const ServiceIcon = currentService.icon;
 
@@ -133,12 +164,12 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
       </div>
 
       {/* Services Sub-bar */}
-      <div className="flex justify-center gap-1 sm:gap-2 mb-8 bg-[#1a1a24] p-1.5 rounded-2xl border border-gray-800 w-full max-w-[320px] mx-auto">
+      <div className="flex justify-center gap-1 sm:gap-2 mb-8 bg-[#1a1a24] p-1.5 rounded-2xl border border-gray-800 w-full max-w-[380px] mx-auto overflow-x-auto">
         {services.map(s => (
           <button
             key={s.id}
             onClick={() => setSelectedService(s.id)}
-            className={`flex-1 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+            className={`flex-1 min-w-[70px] py-2 px-1 rounded-xl text-[10px] sm:text-xs font-bold transition-all whitespace-nowrap ${
               selectedService === s.id 
                 ? 'bg-[#ffb800] text-black shadow-md' 
                 : 'text-gray-400 hover:text-white'
