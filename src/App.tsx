@@ -60,8 +60,40 @@ function Home({ onSelectPackage }: { onSelectPackage: (pkg: any) => void }) {
 
     if (selectedPlatform === 'tiktok') {
       if (selectedService === 'followers') {
-        baseAmount = 1000;
-        basePrice = 250;
+        return [
+          {
+            id: 0,
+            followers: 5000,
+            price: 270,
+            discount: '135.00',
+            badge: 'new',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || '1'
+          },
+          {
+            id: 1,
+            followers: 10000,
+            price: 540,
+            discount: '270.00',
+            badge: '',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || '2'
+          },
+          {
+            id: 2,
+            followers: 20000,
+            price: 1080,
+            discount: '540.00',
+            badge: 'best_seller',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || '3'
+          },
+          {
+            id: 3,
+            followers: 50000,
+            price: 2700,
+            discount: '1350.00',
+            badge: '',
+            providerServiceId: serviceIdMap[selectedPlatform]?.[selectedService] || '4'
+          }
+        ];
       }
     } else if (selectedPlatform === 'facebook') {
       if (selectedService === 'followers') {
